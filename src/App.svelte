@@ -101,11 +101,11 @@ function createXLS() {
 
 	let data = zmanim.times[element.time][value.unformatted];
 	if (data != undefined) {	
-	console.log("final kz " + JSON.stringify(data))
-	result[element.name].push(timeMath(data ,element.minutes,element.beforeAfter));
-	result.Parshiyos.push(key);
-	result.Dates.push(value.formatted);
-	console.log(`minutes ${element.minutes} be/af ${element.beforeAfter}`)
+		console.log("final kz " + JSON.stringify(data))
+		result[element.name].push(timeMath(data ,element.minutes,element.beforeAfter));
+		result.Parshiyos.push(key);
+		result.Dates.push(value.formatted);
+		console.log(`minutes ${element.minutes} be/af ${element.beforeAfter}`)
 
 	}
 		
