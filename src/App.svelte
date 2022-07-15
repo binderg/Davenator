@@ -1,19 +1,14 @@
-<svelte:head>
-</svelte:head>
-
 <script>
-
+  import Location from "./Location.svelte";
   import Rule from "./Rule.svelte";
-  import { columns, idIncrement } from "./store.js";
+  import { location, columns, idIncrement } from "./store.js";
   import moment from "moment";
 
   /*------------data-------------*/
-  export let location = null
   let startParsha = null;
   let endParsha = null;
   let parshiyosJSON = {};
   $columns = [];
-
   idIncrement.set(0); // this is a crude way to increment the id for new items
 
   function addItem(type) {
@@ -67,7 +62,7 @@
 
   function save() {
     if (requiredFields()) {
-      createXLS();
+      createFinalJSON();
     }
   }
 
@@ -87,20 +82,28 @@
       )
     ) {
       alert("Please choose an end parsha that is after the start parsha");
+    } else if (
+      $location && // 👈 null and undefined check
+      Object.keys($location).length === 0 &&
+      Object.getPrototypeOf($location) === Object.prototype
+    ) {
+      alert("Please select a location");
     } else {
       return true;
     }
   }
 
-  function createXLS() {
+  function createFinalJSON() {
     /*-----------get Zmanim info-------------*/
     //get start and end dates
     let startDate = parshiyosObj[startParsha].unformatted;
     let endDate = parshiyosObj[endParsha].unformatted;
-	let result = {};
+    let result = {};
     let zmanimURL = "";
     let zmanim = {};
-    zmanimURL = `https://www.hebcal.com/zmanim?cfg=json&geonameid=3448439&start=${startDate}&end=${endDate}`;
+    let lat = $location.lat;
+    let long = $location.long;
+    zmanimURL = `https://www.hebcal.com/zmanim?cfg=json&geonameid=3448439&start=${startDate}&end=${endDate}&latitude=${lat}&long=${long}`;
     //get zmanim for set dates
     async function getZmanim() {
       const res = await fetch(zmanimURL);
@@ -150,32 +153,26 @@
             }
           }
         });
-		/*-----------Create xlsx-------------*/
-		createXLSXfromResult(result);
+        /*-----------Create xlsx-------------*/
+        createXLSXfromResult(result);
       } else {
         throw new Error(404);
       }
     }
     getZmanim();
-	
-
-
-	
   }
-  function createXLSXfromResult(object){
-	//console.log("Result: " + JSON.stringify(object));
-	 console.log("Result: " + resultToArrays(object));
-	var wb = XLSX.utils.book_new();
-	wb.Props = {
-                Title: "Zmanim Table",
-                Subject: "Zmanim",
-                Author: "Davenator",
-                CreatedDate: new Date()
-        };
-		wb.SheetNames.push("Test Sheet");
-		var ws = XLSX.utils.aoa_to_sheet(resultToArrays(object));
-		wb.Sheets["Test Sheet"] = ws;
-		XLSX.writeFile(wb, "Zmanim Table.xlsx");
+  function createXLSXfromResult(object) {
+    var wb = XLSX.utils.book_new();
+    wb.Props = {
+      Title: "Zmanim Table",
+      Subject: "Zmanim",
+      Author: "Davenator",
+      CreatedDate: new Date(),
+    };
+    wb.SheetNames.push("Test Sheet");
+    var ws = XLSX.utils.aoa_to_sheet(resultToArrays(object));
+    wb.Sheets["Test Sheet"] = ws;
+    XLSX.writeFile(wb, "Zmanim Table.xlsx");
   }
 
   function timeMath(dateString, minutes, beforeAfter) {
@@ -191,20 +188,22 @@
   function resultToArrays(object) {
     let excelArrays = [];
     Object.keys(object).forEach((element) => {
-    //   let tempArray = [];
-    //   tempArray.push(element);
-	//   console.log("te " + object[element])
-    //   tempArray.concat(object[element]);
+      //   let tempArray = [];
+      //   tempArray.push(element);
+      //   console.log("te " + object[element])
+      //   tempArray.concat(object[element]);
       excelArrays.push([element, ...object[element]]);
     });
-	console.log("ea " + excelArrays)
-    return excelArrays[0].map((_, colIndex) => excelArrays.map(row => row[colIndex]));;
+    return excelArrays[0].map((_, colIndex) =>
+      excelArrays.map((row) => row[colIndex])
+    );
   }
-
 </script>
 
-<main>
+<svelte:head />
 
+<main>
+  <Location />
 
   <div class="row">
     <div class="col s6">
