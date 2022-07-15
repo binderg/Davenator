@@ -85,60 +85,78 @@
 	}
 
 	function createXLS() {
-		/*-----------get Zmanim info-------------*/
-		//get start and end dates
-		let startDate = parshiyosObj[startParsha].unformatted;
-		let endDate = parshiyosObj[endParsha].unformatted;
-		let zmanimURL = "";
-		let zmanim = {};
-		zmanimURL = `https://www.hebcal.com/zmanim?cfg=json&geonameid=3448439&start=${startDate}&end=${endDate}`;
-		//get zmanim for set dates
-		async function getZmanim() {
-			const res = await fetch(zmanimURL);
+	/*-----------get Zmanim info-------------*/
+	//get start and end dates
+	let startDate = parshiyosObj[startParsha].unformatted;
+	let endDate = parshiyosObj[endParsha].unformatted;
+	let zmanimURL = ""
+	let zmanim = {};
+	zmanimURL = `https://www.hebcal.com/zmanim?cfg=json&geonameid=3448439&start=${startDate}&end=${endDate}`
+	//get zmanim for set dates
+	async function getZmanim() {
+		const res = await fetch(zmanimURL);
 
-			if (res.ok) {
-				zmanim = await res.json();
-				let result = {};
-				result.Parshiyos = [];
-				result.Dates = [];
-				/*-----------Populate result with Times-------------*/
-				$columns.forEach((element) => {
-					result[element.name] = [];
-					//-------------if rule---------------
-					//get times
-					let bool = false;
-					//Key - date, location, time
-					for (const [key, value] of Object.entries(parshiyosObj)) {
-						let data =
-							zmanim.times[element.time][value.unformatted];
-						if (data != undefined) {
-							console.log("final kz " + JSON.stringify(data));
-							result[element.name].push(
-								timeMath(
-									data,
-									element.minutes,
-									element.beforeAfter
-								)
-							);
-							result.Parshiyos.push(key);
-							result.Dates.push(value.formatted);
-							console.log(
-								`minutes ${element.minutes} be/af ${element.beforeAfter}`
-							);
-						}
-					}
-					//--------------if textbox - for amount of parshiyos in parsha column, add to textcolumn
-					for (const parsha in result.Parshiyos) {
-						result[element.name].push(element.text);
-					}
-				});
-				console.log("Result: " + JSON.stringify(result));
-			} else {
-				throw new Error(404);
-			}
+		if (res.ok) {	
+			zmanim = await res.json();
+	let result = {}
+	result.Parshiyos = []
+	result.Dates = []	
+
+	/*-----------Populate result with Parshiyos and Dates-------------*/
+		let parshiyosObjKeysArray = Object.keys(parshiyosObj)
+		let startParshaIndex = parshiyosObjKeysArray.indexOf(startParsha);
+		let endParshaIndex = parshiyosObjKeysArray.indexOf(endParsha);
+		for (let index = startParshaIndex; index <= endParshaIndex; index++) {
+			const parshiyosObjKey = parshiyosObjKeysArray[index]; //Parsha
+			result.Parshiyos.push(parshiyosObjKey); //Parsha
+			result.Dates.push(parshiyosObj[parshiyosObjKey].formatted); //Dates
+			
 		}
-		getZmanim();
+	/*-----------Populate result with Times-------------*/
+	$columns.forEach(element => {
+		result[element.name] = [];
+			//--------------if textbox - for amount of parshiyos in parsha column, add to textcolumn
+			if(element.type != "rule"){
+			for (let index = startParshaIndex; index <= endParshaIndex; index++) {
+
+			result[element.name].push(element.text);
+
+				}	}
+		// element has {id:null, type:"rule", name:"", minutes:"", beforeAfter:"", time:"", text:"" }
+		//get times
+		//key - parsha
+		if(element.type == "rule"){
+		for (const [key,value] of Object.entries(parshiyosObj)) {
+			console.log("IN1")
+			//-------------if rule - do math and add the modified date
+			let data = zmanim.times[element.time][value.unformatted]; // data from zmanim object
+			//console.log(`et ${element.time} vuf ${value.unformatted}  data ${data}`) 
+			if (data != undefined) {	
+				//add chosen parshiyos and info-------------
+				// result.Parshiyos.push(key); //Parsha
+				// result.Dates.push(value.formatted); //Dates
+				console.log("final kz " + JSON.stringify(data))
+					result[element.name].push(timeMath(data ,element.minutes,element.beforeAfter)); //Time
+				}
+			
+		}
+		
+		
 	}
+});
+		
+	
+		
+	console.log("Result: " + JSON.stringify(result))
+		} else {
+			throw new Error(404);
+		}
+	}
+	getZmanim();
+
+	
+
+}
 
 	function timeMath(dateString, minutes, beforeAfter) {
 		let date = moment(dateString);
