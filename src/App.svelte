@@ -1,260 +1,276 @@
+<svelte:head>
+</svelte:head>
+
 <script>
-	import Rule from "./Rule.svelte";
-	import { columns, idIncrement } from "./store.js";
-	import moment from "moment";
 
-	/*------------data-------------*/
-	let startParsha = null;
-	let endParsha = null;
-	$columns = [];
+  import Rule from "./Rule.svelte";
+  import { columns, idIncrement } from "./store.js";
+  import moment from "moment";
 
-	idIncrement.set(0); // this is a crude way to increment the id for new items
+  /*------------data-------------*/
+  export let location = null
+  let startParsha = null;
+  let endParsha = null;
+  let parshiyosJSON = {};
+  $columns = [];
 
-	function addItem(type) {
-		var l = $columns.length; // get our current items list count
-		$columns[l] = {
-			id: $idIncrement,
-			name: "",
-			minutes: null,
-			beforeAfter: "before",
-			time: "",
-			text: "",
-		};
-		if (type == "rule") {
-			$columns[l].type = "rule";
-		} else {
-			$columns[l].type = "textbox";
-		}
-		console.log($columns);
-		$idIncrement++; // increment our id to add additional items
-	}
-	//------------------------------
-	let promise = Promise.resolve([]);
+  idIncrement.set(0); // this is a crude way to increment the id for new items
 
-	let parshiyosObj = {};
-	let parshaURL =
-		"https://www.hebcal.com/hebcal?v=1&cfg=json&year=now&month=x&s=on&leyning=off";
+  function addItem(type) {
+    var l = $columns.length; // get our current items list count
+    $columns[l] = {
+      id: $idIncrement,
+      name: "",
+      minutes: null,
+      beforeAfter: "before",
+      time: "",
+      text: "",
+    };
+    if (type == "rule") {
+      $columns[l].type = "rule";
+    } else {
+      $columns[l].type = "textbox";
+    }
+    $idIncrement++; // increment our id to add additional items
+  }
+  //------------------------------
+  let promise = Promise.resolve([]);
 
-	async function parshiyos() {
-		const res = await fetch(parshaURL);
-		parshiyosJSON = await res.json();
+  let parshiyosObj = {};
+  let parshaURL =
+    "https://www.hebcal.com/hebcal?v=1&cfg=json&year=now&month=x&s=on&leyning=off";
 
-		if (res.ok) {
-			parshiyosJSON.items.forEach((element) => {
-				//Remove "Parshat"
-				let parsha = element.title.substr(9)
-				//Add unformatted date
-				parshiyosObj[parsha] = {};
-				parshiyosObj[parsha].unformatted = element.date;
-				//Reformat date
-				const dateArray = element.date.split("-");
-				//add to parshiyos array
-				const date = `${dateArray[1]}/${dateArray[2]}/${dateArray[0]}`;
-				parshiyosObj[parsha].formatted = date;
-			});
-		} else {
-			throw new Error(users);
-		}
-	}
-	promise = parshiyos();
+  async function parshiyos() {
+    const res = await fetch(parshaURL);
+    parshiyosJSON = await res.json();
 
-	//------------XLS-------------
+    if (res.ok) {
+      parshiyosJSON.items.forEach((element) => {
+        //Remove "Parshat"
+        let parsha = element.title.substr(9);
+        //Add unformatted date
+        parshiyosObj[parsha] = {};
+        parshiyosObj[parsha].unformatted = element.date;
+        //Reformat date
+        const dateArray = element.date.split("-");
+        //add to parshiyos array
+        const date = `${dateArray[1]}/${dateArray[2]}/${dateArray[0]}`;
+        parshiyosObj[parsha].formatted = date;
+      });
+    } else {
+      throw new Error(users);
+    }
+  }
+  promise = parshiyos();
 
-	function save() {
-		if (requiredFields()) {
-			createXLS();
-		}
-	}
+  //------------XLS-------------
 
-	function requiredFields() {
+  function save() {
+    if (requiredFields()) {
+      createXLS();
+    }
+  }
 
-		if (startParsha == null) {
-			alert("Please select a start Parsha");
-			return false;
-		} else if (endParsha == null) {
-			alert("Please select an end Parsha");
-			return false;
-		} else if ($columns.length < 1) {
-			alert("Please add a column");
-			return false;
-		} else if (moment(parshiyosObj[endParsha].unformatted).isBefore(parshiyosObj[startParsha].unformatted)) {
-			alert("Please choose an end parsha that is after the start parsha")
-		} else {
-			return true;
-		}
-	}
+  function requiredFields() {
+    if (startParsha == null) {
+      alert("Please select a start Parsha");
+      return false;
+    } else if (endParsha == null) {
+      alert("Please select an end Parsha");
+      return false;
+    } else if ($columns.length < 1) {
+      alert("Please add a column");
+      return false;
+    } else if (
+      moment(parshiyosObj[endParsha].unformatted).isBefore(
+        parshiyosObj[startParsha].unformatted
+      )
+    ) {
+      alert("Please choose an end parsha that is after the start parsha");
+    } else {
+      return true;
+    }
+  }
 
-	function createXLS() {
-	/*-----------get Zmanim info-------------*/
-	//get start and end dates
-	let startDate = parshiyosObj[startParsha].unformatted;
-	let endDate = parshiyosObj[endParsha].unformatted;
-	let zmanimURL = ""
-	let zmanim = {};
-	zmanimURL = `https://www.hebcal.com/zmanim?cfg=json&geonameid=3448439&start=${startDate}&end=${endDate}`
-	//get zmanim for set dates
-	async function getZmanim() {
-		const res = await fetch(zmanimURL);
+  function createXLS() {
+    /*-----------get Zmanim info-------------*/
+    //get start and end dates
+    let startDate = parshiyosObj[startParsha].unformatted;
+    let endDate = parshiyosObj[endParsha].unformatted;
+	let result = {};
+    let zmanimURL = "";
+    let zmanim = {};
+    zmanimURL = `https://www.hebcal.com/zmanim?cfg=json&geonameid=3448439&start=${startDate}&end=${endDate}`;
+    //get zmanim for set dates
+    async function getZmanim() {
+      const res = await fetch(zmanimURL);
 
-		if (res.ok) {	
-			zmanim = await res.json();
-	let result = {}
-	result.Parshiyos = []
-	result.Dates = []	
+      if (res.ok) {
+        zmanim = await res.json();
+        result.Parshiyos = [];
+        result.Dates = [];
 
-	/*-----------Populate result with Parshiyos and Dates-------------*/
-		let parshiyosObjKeysArray = Object.keys(parshiyosObj)
-		let startParshaIndex = parshiyosObjKeysArray.indexOf(startParsha);
-		let endParshaIndex = parshiyosObjKeysArray.indexOf(endParsha);
-		for (let index = startParshaIndex; index <= endParshaIndex; index++) {
-			const parshiyosObjKey = parshiyosObjKeysArray[index]; //Parsha
-			result.Parshiyos.push(parshiyosObjKey); //Parsha
-			result.Dates.push(parshiyosObj[parshiyosObjKey].formatted); //Dates
-			
-		}
-	/*-----------Populate result with Times-------------*/
-	$columns.forEach(element => {
-		result[element.name] = [];
-			//--------------if textbox - for amount of parshiyos in parsha column, add to textcolumn
-			if(element.type != "rule"){
-			for (let index = startParshaIndex; index <= endParshaIndex; index++) {
-
-			result[element.name].push(element.text);
-
-				}	}
-		// element has {id:null, type:"rule", name:"", minutes:"", beforeAfter:"", time:"", text:"" }
-		//get times
-		//key - parsha
-		if(element.type == "rule"){
-		for (const [key,value] of Object.entries(parshiyosObj)) {
-			console.log("IN1")
-			//-------------if rule - do math and add the modified date
-			let data = zmanim.times[element.time][value.unformatted]; // data from zmanim object
-			//console.log(`et ${element.time} vuf ${value.unformatted}  data ${data}`) 
-			if (data != undefined) {	
-				//add chosen parshiyos and info-------------
-				// result.Parshiyos.push(key); //Parsha
-				// result.Dates.push(value.formatted); //Dates
-				console.log("final kz " + JSON.stringify(data))
-					result[element.name].push(timeMath(data ,element.minutes,element.beforeAfter)); //Time
-				}
-			
-		}
-		
-		
-	}
-});
-		
+        /*-----------Populate result with Parshiyos and Dates-------------*/
+        let parshiyosObjKeysArray = Object.keys(parshiyosObj);
+        let startParshaIndex = parshiyosObjKeysArray.indexOf(startParsha);
+        let endParshaIndex = parshiyosObjKeysArray.indexOf(endParsha);
+        for (let index = startParshaIndex; index <= endParshaIndex; index++) {
+          const parshiyosObjKey = parshiyosObjKeysArray[index]; //Parsha
+          result.Dates.push(parshiyosObj[parshiyosObjKey].formatted); //Dates
+          result.Parshiyos.push(parshiyosObjKey); //Parsha
+        }
+        /*-----------Populate result with Times-------------*/
+        $columns.forEach((element) => {
+          result[element.name] = [];
+          //--------------if textbox - for amount of parshiyos in parsha column, add to textcolumn
+          if (element.type != "rule") {
+            for (
+              let index = startParshaIndex;
+              index <= endParshaIndex;
+              index++
+            ) {
+              result[element.name].push(element.text);
+            }
+          }
+          // element has {id:null, type:"rule", name:"", minutes:"", beforeAfter:"", time:"", text:"" }
+          //get times
+          //key - parsha
+          if (element.type == "rule") {
+            for (const [key, value] of Object.entries(parshiyosObj)) {
+              //-------------if rule - do math and add the modified date
+              let data = zmanim.times[element.time][value.unformatted]; // data from zmanim object
+              if (data != undefined) {
+                //add chosen parshiyos and info-------------
+                // result.Parshiyos.push(key); //Parsha
+                // result.Dates.push(value.formatted); //Dates
+                result[element.name].push(
+                  timeMath(data, element.minutes, element.beforeAfter)
+                ); //Time
+              }
+            }
+          }
+        });
+		/*-----------Create xlsx-------------*/
+		createXLSXfromResult(result);
+      } else {
+        throw new Error(404);
+      }
+    }
+    getZmanim();
 	
-		
-	console.log("Result: " + JSON.stringify(result))
-		} else {
-			throw new Error(404);
-		}
-	}
-	getZmanim();
+
 
 	
+  }
+  function createXLSXfromResult(object){
+	//console.log("Result: " + JSON.stringify(object));
+	 console.log("Result: " + resultToArrays(object));
+	var wb = XLSX.utils.book_new();
+	wb.Props = {
+                Title: "Zmanim Table",
+                Subject: "Zmanim",
+                Author: "Davenator",
+                CreatedDate: new Date()
+        };
+		wb.SheetNames.push("Test Sheet");
+		var ws = XLSX.utils.aoa_to_sheet(resultToArrays(object));
+		wb.Sheets["Test Sheet"] = ws;
+		XLSX.writeFile(wb, "Zmanim Table.xlsx");
+  }
 
-}
+  function timeMath(dateString, minutes, beforeAfter) {
+    let date = moment(dateString);
+    if (beforeAfter == "before") {
+      date = moment(date).subtract(minutes, "minutes");
+    } else {
+      date = moment(date).add(minutes, "minutes");
+    }
+    return moment(date).format("h:mm a");
+  }
 
-	function timeMath(dateString, minutes, beforeAfter) {
-		let date = moment(dateString);
-		console.log(date.format("h:mm a"));
-		if (beforeAfter == "before") {
-			date = moment(date).subtract(minutes, "minutes");
-		} else {
-			date = moment(date).add(minutes, "minutes");
-		}
-		console.log(date.format("h:mm a"));
-		return moment(date).format("h:mm a");
-	}
+  function resultToArrays(object) {
+    let excelArrays = [];
+    Object.keys(object).forEach((element) => {
+    //   let tempArray = [];
+    //   tempArray.push(element);
+	//   console.log("te " + object[element])
+    //   tempArray.concat(object[element]);
+      excelArrays.push([element, ...object[element]]);
+    });
+	console.log("ea " + excelArrays)
+    return excelArrays[0].map((_, colIndex) => excelArrays.map(row => row[colIndex]));;
+  }
 
-	function save1() {
-		$columns.forEach((element) => {
-			//if rule
-
-			//if textbox - for amount of parshiyos in parsha column, add to textcolumn
-			for (const parsha in result[element.Parshiyos]) {
-				result[element.name] = [element.text];
-			}
-
-			/* flatten objects */
-			const rows = results.map((row) => ({}));
-		});
-		/* generate worksheet and workbook */
-		const worksheet = XLSX.utils.json_to_sheet(rows);
-		const workbook = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(workbook, worksheet, "Times");
-
-		XLSX.writeFile(workbook, "Times.xlsx");
-	}
 </script>
 
 <main>
-	<div class="row">
-		<div class="col s6">
-			<label>Start Parsha</label>
-			<select bind:value={startParsha} class="browser-default">
-				{#await promise}
-					...
-				{:then}
-					<option value="" disabled selected> Choose your starting Parsha </option>
-					{#each Object.entries(parshiyosObj) as [parsha, date], i}
-						<option value={parsha}>
-							{parsha}: {date.formatted}</option
-						>
-					{/each}
-				{/await}
-			</select>
-		</div>
-		<div class="col s6">
-			<label>End Parsha</label>
-			<select bind:value={endParsha} class="browser-default">
-				{#await promise}
-					...
-				{:then}
-					<option value="" disabled selected> Choose your starting Parsha</option>
-					{#each Object.entries(parshiyosObj) as [parsha, date], i}
-						<option value={parsha}> {parsha}: {date.formatted}</option>
-					{/each}
-				{/await}
-			</select>
-		</div>
-	</div>
 
-	<a on:click={() => addItem("rule")} class="waves-effect waves-light btn"
-		><i class="material-icons left">code</i>Add Rule Column</a
-	>
-	<a on:click={() => addItem("textbox")} class="waves-effect waves-light btn"
-		><i class="material-icons left">text_fields</i>Add Text Column</a
-	>
-	<a on:click={save} class="waves-effect waves-light btn"
-		><i class="material-icons left">cloud</i>Save</a
-	>
-	{#each $columns as item}
-		<svelte:component this={Rule} objAttributes={item} />
-	{/each}
+
+  <div class="row">
+    <div class="col s6">
+      <label>Start Parsha</label>
+      <select bind:value={startParsha} class="browser-default">
+        {#await promise}
+          ...
+        {:then}
+          <option value="" disabled selected>
+            Choose your starting Parsha
+          </option>
+          {#each Object.entries(parshiyosObj) as [parsha, date], i}
+            <option value={parsha}> {parsha}: {date.formatted}</option>
+          {/each}
+        {/await}
+      </select>
+    </div>
+    <div class="col s6">
+      <label>End Parsha</label>
+      <select bind:value={endParsha} class="browser-default">
+        {#await promise}
+          ...
+        {:then}
+          <option value="" disabled selected>
+            Choose your starting Parsha</option
+          >
+          {#each Object.entries(parshiyosObj) as [parsha, date], i}
+            <option value={parsha}> {parsha}: {date.formatted}</option>
+          {/each}
+        {/await}
+      </select>
+    </div>
+  </div>
+
+  <a on:click={() => addItem("rule")} class="waves-effect waves-light btn"
+    ><i class="material-icons left">code</i>Add Rule Column</a
+  >
+  <a on:click={() => addItem("textbox")} class="waves-effect waves-light btn"
+    ><i class="material-icons left">text_fields</i>Add Text Column</a
+  >
+  <a on:click={save} class="waves-effect waves-light btn"
+    ><i class="material-icons left">cloud</i>Save</a
+  >
+  {#each $columns as item}
+    <svelte:component this={Rule} objAttributes={item} />
+  {/each}
 </main>
 
 <style>
-	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
-	}
+  main {
+    text-align: center;
+    padding: 1em;
+    max-width: 240px;
+    margin: 0 auto;
+  }
 
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
-	}
+  h1 {
+    color: #ff3e00;
+    text-transform: uppercase;
+    font-size: 4em;
+    font-weight: 100;
+  }
 
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	}
+  @media (min-width: 640px) {
+    main {
+      max-width: none;
+    }
+  }
 </style>
