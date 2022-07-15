@@ -1,11 +1,13 @@
 <script>
-import Rule from './Rule.svelte';
-import { columns, idIncrement } from './store.js';
-import moment from 'moment';
-
+	import Rule from './Rule.svelte';
+	import { columns, idIncrement } from './store.js';
+	import moment from 'moment';
+	
+	
 /*------------data-------------*/
 let startParsha = null;
 let endParsha = null;
+let parshiyosJSON = {};
 $columns = [];
 
 idIncrement.set(0);	// this is a crude way to increment the id for new items
@@ -28,7 +30,6 @@ let parshaURL = 'https://www.hebcal.com/hebcal?v=1&cfg=json&year=now&month=x&s=o
 
 async function parshiyos() {
 		const res = await fetch(parshaURL);
-		let parshiyosJSON = {};
 		parshiyosJSON = await res.json();
 
 		if (res.ok) {	
@@ -90,32 +91,52 @@ function createXLS() {
 	let result = {}
 	result.Parshiyos = []
 	result.Dates = []	
+
+	/*-----------Populate result with Parshiyos and Dates-------------*/
+		let parshiyosObjKeysArray = Object.keys(parshiyosObj)
+		let startParshaIndex = parshiyosObjKeysArray.indexOf(startParsha);
+		let endParshaIndex = parshiyosObjKeysArray.indexOf(endParsha);
+		for (let index = startParshaIndex; index <= endParshaIndex; index++) {
+			const parshiyosObjKey = parshiyosObjKeysArray[index]; //Parsha
+			result.Parshiyos.push(parshiyosObjKey); //Parsha
+			result.Dates.push(parshiyosObj[parshiyosObjKey].formatted); //Dates
+			
+		}
 	/*-----------Populate result with Times-------------*/
 	$columns.forEach(element => {
 		result[element.name] = [];
-		//-------------if rule---------------
+			//--------------if textbox - for amount of parshiyos in parsha column, add to textcolumn
+			if(element.type != "rule"){
+			for (let index = startParshaIndex; index <= endParshaIndex; index++) {
+
+			result[element.name].push(element.text);
+
+				}	}
+		// element has {id:null, type:"rule", name:"", minutes:"", beforeAfter:"", time:"", text:"" }
 		//get times
-		let bool = false;
-		//Key - date, location, time
+		//key - parsha
+		if(element.type == "rule"){
 		for (const [key,value] of Object.entries(parshiyosObj)) {
-
-	let data = zmanim.times[element.time][value.unformatted];
-	if (data != undefined) {	
-	console.log("final kz " + JSON.stringify(data))
-	result[element.name].push(timeMath(data ,element.minutes,element.beforeAfter));
-	result.Parshiyos.push(key);
-	result.Dates.push(value.formatted);
-	console.log(`minutes ${element.minutes} be/af ${element.beforeAfter}`)
-
-	}
+			console.log("IN1")
+			//-------------if rule - do math and add the modified date
+			let data = zmanim.times[element.time][value.unformatted]; // data from zmanim object
+			//console.log(`et ${element.time} vuf ${value.unformatted}  data ${data}`) 
+			if (data != undefined) {	
+				//add chosen parshiyos and info-------------
+				// result.Parshiyos.push(key); //Parsha
+				// result.Dates.push(value.formatted); //Dates
+				console.log("final kz " + JSON.stringify(data))
+					result[element.name].push(timeMath(data ,element.minutes,element.beforeAfter)); //Time
+				}
+			
+		}
+		
 		
 	}
-	//--------------if textbox - for amount of parshiyos in parsha column, add to textcolumn
-	for (const parsha in result.Parshiyos) {
-		result[element.name].push(element.text);
-	}
-
-	});
+});
+		
+	
+		
 	console.log("Result: " + JSON.stringify(result))
 		} else {
 			throw new Error(404);
