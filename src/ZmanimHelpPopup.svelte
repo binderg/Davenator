@@ -7,9 +7,10 @@
     <div style="z-index:2147483647"  id="popup1" class="overlay">
         <div class="popup">
             <h5>Zmanim</h5>
+            <p style="font-style: italic;">From hebcal.com</p>
             <a class="close" href="#"><span style="font-size:30px">&times;</span></a>
             <div class="content"				>
-                <p style = "height: 30vw; overflow:scroll;">
+                <p style = "height: 30vw; overflow:auto;">
                     <span style="color:#e74c3c"><strong>Midnight &ndash; Chatzot</strong></span><br />
                     Sunset plus 6 halachic hours<br />
                     <span style="color:#e74c3c"><strong>Dawn &ndash; Alot haShachar</strong></span><br />
@@ -60,7 +61,7 @@
 </main>
 
 <style>
-    button, input[type="submit"], input[type="reset"] {
+button, input[type="submit"], input[type="reset"] {
 	background: none;
 	color: inherit;
 	border: none;
@@ -108,13 +109,9 @@
   width: 30%;
   position: relative;
   transition: all 5s ease-in-out;
+  padding: 10px 30px 10px 30px
 }
 
-.popup h2 {
-  margin-top: 0;
-  color: #333;
-  font-family: Tahoma, Arial, sans-serif;
-}
 .popup .close {
   position: absolute;
   top: 20px;
@@ -130,7 +127,6 @@
 }
 .popup .content {
   max-height: 30%;
-  overflow: auto;
 }
 
 @media screen and (max-width: 700px){
