@@ -85,21 +85,21 @@ async function onMyLocationClick() {
 </script>
 
 <main>
-  
+
   <div class="container">
     <div class="row">
       <div class="col-12 text-center text-3xl	"><h2>Davenator</h2></div>
       <div class="col-12">
-        <div id="custom-search-input">
+        <div id="custom-search-input input-container">
           <div class="input-group">
+            <a class="btn-flat" on:click={onMyLocationClick}><i class="material-icons right">my_location</i></a>
             <input
             id="autocomplete_search"
             name="autocomplete_search"
             type="text"
-            class="form-control"
+            class="form-control input"
             placeholder="Location"
             />
-            <a class="waves-effect waves-teal btn-flat" on:click={onMyLocationClick}><i class="material-icons right">my_location</i></a>
             
           </div>
         </div>
@@ -117,19 +117,42 @@ async function onMyLocationClick() {
     margin: 0 auto;
   }
 
+
   h1 {
     color: #ff3e00;
     text-transform: uppercase;
     font-size: 4em;
     font-weight: 100;
   }
-  btn {
-    border:none;
+
+  .input-container {
+    display: -ms-flexbox;
+    display:flex;
+    width: 100%;
+    flex-direction:column;
+    position:relative;
 
   }
-  input-group {
-    flex:auto
+  .input-group {
+  width: 100%;
+  font-size:20px;
+  padding: 5px;
+  outline: none;
+  border:1px solid #000;
+  border-left:none;
+  color:#000;
+}
+  .input {
+    position: absolute;
+    /* width: 75%; */
+    /* padding-right: 50px; */
   }
+  .btn-flat {
+    /* position:absolute; */
+    margin-right:30;
+    padding: 10px;
+  }
+  
 
   @media (min-width: 640px) {
     main {
