@@ -188,10 +188,6 @@
   function resultToArrays(object) {
     let excelArrays = [];
     Object.keys(object).forEach((element) => {
-      //   let tempArray = [];
-      //   tempArray.push(element);
-      //   console.log("te " + object[element])
-      //   tempArray.concat(object[element]);
       excelArrays.push([element, ...object[element]]);
     });
     return excelArrays[0].map((_, colIndex) =>
@@ -228,7 +224,7 @@
           ...
         {:then}
           <option value="" disabled selected>
-            Choose your starting Parsha</option
+            Choose your ending Parsha</option
           >
           {#each Object.entries(parshiyosObj) as [parsha, date], i}
             <option value={parsha}> {parsha}: {date.formatted}</option>

@@ -4,6 +4,8 @@ import resolve from '@rollup/plugin-node-resolve';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
 import css from 'rollup-plugin-css-only';
+import dotenv from "dotenv"
+dotenv.config() // inject the content of the .env file into 'process.env'
 
 const production = !process.env.ROLLUP_WATCH;
 
