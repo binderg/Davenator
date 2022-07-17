@@ -228,7 +228,7 @@
           ...
         {:then}
           <option value="" disabled selected>
-            Choose your starting Parsha</option
+            Choose your ending Parsha</option
           >
           {#each Object.entries(parshiyosObj) as [parsha, date], i}
             <option value={parsha}> {parsha}: {date.formatted}</option>

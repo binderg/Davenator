@@ -24,8 +24,8 @@
 
   async function getGeoInfo(place_id) {
     const res = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?place_id=${place_id}&key=AIzaSyBvQBjBzOIihWhd9_dUPqhhlseMCJAeCIc&libraries=places`
-    );
+      `https://maps.googleapis.com/maps/api/geocode/json?place_id=${place_id}&key=______________googleapikey___________c&libraries=places`
+    );  
 
     if (res.ok) {
       return res.json();
@@ -34,6 +34,7 @@
 </script>
 
 <main>
+  
   <div class="container">
     <div class="row">
       <div class="col-12 text-center text-3xl	"><h2>Davenator</h2></div>
@@ -54,6 +55,7 @@
       </div>
     </div>
   </div>
+
 </main>
 
 <style>
