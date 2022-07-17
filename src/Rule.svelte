@@ -61,14 +61,15 @@
 		</select>
 	</div>
 	<div class="col s2">
-		<label>Time</label>
+		<label>Zman</label>
 		<select bind:value={objAttributes.time} class="browser-default">
-			<option value="" disabled selected>Time</option>
+			<option value="" disabled selected>Zman</option>
 			{#each zmanim as zman}
 			<option value={zman.value}>{zman.text}</option>
 	        {/each}
-
 		</select>
+		<button id="info"><i class="material-icons" style="color:grey">info</i></button>
+
       
 
 </div>	
@@ -88,10 +89,10 @@
 			<label for="name">Text</label>
 		  </div>
 		</div>  
+
+
 {/if}
 
-	
-	
 </main>
 
 <style>
@@ -114,4 +115,18 @@
 			max-width: none;
 		}
 	}
+
+	#info, input[type="submit"], input[type="reset"] {
+	background: none;
+	color: inherit;
+	border: none;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
+	outline: inherit;
+}
+#info:focus {
+    outline: 0 !important;
+	background-color: transparent;
+}
 </style>
