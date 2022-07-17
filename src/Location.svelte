@@ -72,17 +72,15 @@ async function getUserLocation(lat, lon) {
 
 async function onMyLocationClick() {
   if (initUserLocation() && $location.lat !== undefined && $location.long !== undefined ) { 
-    //TODO: the first time the location button is clicked, location.lat and location.long are undefined, so api cannot be called. 
+    //TODO: the first time the location button is clicked, location.lat and location.long are undefined, so api cannot be called. push 
       getUserLocation($location.lat, $location.long).then((geoInfo) => {
         const results = geoInfo.results[4] //just one of the address options. results is an array of same addresses, different formattings
         const address = results.formatted_address
         document.getElementById("autocomplete_search").setAttribute("value", address)
         
       });
-    }
-    
+    } 
   }
-}
 
 </script>
 
