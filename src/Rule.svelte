@@ -1,5 +1,6 @@
 <script>
 	import { columns } from './store.js';
+	import ZmanimHelpPopup from "./ZmanimHelpPopup.svelte";
 	export let objAttributes = {id:null, type:"rule", name:"", minutes:"", beforeAfter:"", time:"", text:"" };
 	let zmanim = [
 		{ value:"chatzotNight", text:"Chatzos"},
@@ -60,6 +61,7 @@
 		  <option value="after">After</option>
 		</select>
 	</div>
+	
 	<div class="col s2">
 		<label>Zman</label>
 		<select bind:value={objAttributes.time} class="browser-default">
@@ -68,11 +70,10 @@
 			<option value={zman.value}>{zman.text}</option>
 	        {/each}
 		</select>
-		<button id="info"><i class="material-icons" style="color:grey">info</i></button>
-
-      
-
 </div>	
+<div class="col s2">
+	<ZmanimHelpPopup />
+	</div>
 </div>	
 {:else}
 
@@ -93,6 +94,9 @@
 
 {/if}
 
+
+
+
 </main>
 
 <style>
@@ -101,13 +105,6 @@
 		padding: 1em;
 		max-width: 240px;
 		margin: 0 auto;
-	}
-
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
 	}
 
 	@media (min-width: 640px) {
@@ -129,4 +126,7 @@
     outline: 0 !important;
 	background-color: transparent;
 }
+
+
+
 </style>
