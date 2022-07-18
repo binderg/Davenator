@@ -88,7 +88,7 @@ async function onMyLocationClick() {
   
   <div class="container">
     <div class="row">
-      <div class="col-12 text-center text-3xl	"><h2>Davenator</h2></div>
+      <div class="col-12 text-center text-3xl	"></div>
       <div class="col-12">
         <div id="custom-search-input">
           <div class="input-group">

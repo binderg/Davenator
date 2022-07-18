@@ -47,7 +47,7 @@
 		  </div>
 		<div class="input-field col s2">
 			<input bind:value={objAttributes.name}  id="name" type="text" class="validate">
-			<label for="name">Name</label>
+			<label for="name">Column Name</label>
 		  </div>
         <div class="input-field col s2">
           <input bind:value={objAttributes.minutes}  id="minutes" type="number" min="0" class="validate">
@@ -83,7 +83,7 @@
 		  </div>
 		  <div class="input-field col s4 pull-s2">
 			<input bind:value={objAttributes.name} id="name" type="text" class="validate">
-			<label for="name">Name</label>
+			<label for="name">Column Name</label>
 		  </div>
 		  <div class="input-field col s4 pull-s2">
 			<input bind:value={objAttributes.text} id="text" type="text" class="validate">

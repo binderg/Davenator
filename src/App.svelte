@@ -1,14 +1,17 @@
 <script>
+  import { onMount } from 'svelte';
+  // import M from 'materialize-css'
+  import ParshaPicker from './ParshaPicker.svelte'
   import Location from "./Location.svelte";
   import Rule from "./Rule.svelte";
-  import { location, columns, idIncrement } from "./store.js";
+  import { startEndParsha, location, columns, idIncrement } from "./store.js";
   import moment from "moment";
 
   /*------------data-------------*/
-  let startParsha = null;
-  let endParsha = null;
   let parshiyosJSON = {};
   $columns = [];
+  $startEndParsha = {start: {date:"", parsha:""}, end: {date:"", parsha:""}}
+  $location = {lat:"40.13", long:"55.14", tzone:"America/New_York"}
   idIncrement.set(0); // this is a crude way to increment the id for new items
 
   function addItem(type) {
@@ -32,31 +35,27 @@
   let promise = Promise.resolve([]);
 
   let parshiyosObj = {};
-  let parshaURL =
-    "https://www.hebcal.com/hebcal?v=1&cfg=json&year=now&month=x&s=on&leyning=off";
 
-  async function parshiyos() {
-    const res = await fetch(parshaURL);
+  async function parshiyosList() {
+    let parshiyosObj ={parshiyos:[], dates:[]};
+    const res = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&s=on&leyning=off&latitude=${lat}&longitude=${long}&tzid=${tzone}&start=${startEndParsha.start.date}&end=${startEndParsha.end.date}`);
+
     parshiyosJSON = await res.json();
 
     if (res.ok) {
-      parshiyosJSON.items.forEach((element) => {
-        //Remove "Parshat"
-        let parsha = element.title.substr(9);
-        //Add unformatted date
-        parshiyosObj[parsha] = {};
-        parshiyosObj[parsha].unformatted = element.date;
-        //Reformat date
-        const dateArray = element.date.split("-");
-        //add to parshiyos array
-        const date = `${dateArray[1]}/${dateArray[2]}/${dateArray[0]}`;
-        parshiyosObj[parsha].formatted = date;
-      });
+
+      for(const element of parshiyosJSON.items){
+        if(element.title.includes("Parashat"))
+        parshiyosList.parshiyos.push(element.title.substr(9));
+        let date = moment(element.date).format("M-DD-YYYY");
+        parshiyosList.dates.push(`${date.format('M')}/${date.format('D')}/${date.format('YYYY')}`);
+      }
+      return parshiyosObj;
     } else {
-      throw new Error(users);
+      console.log("API error")
     }
   }
-  promise = parshiyos();
+  // promise = parshiyos();
 
   //------------XLS-------------
 
@@ -67,7 +66,7 @@
   }
 
   function requiredFields() {
-    if (startParsha == null) {
+    if ($startEndParsha.start.parsha == "") {
       alert("Please select a start Parsha");
       return false;
     } else if (endParsha == null) {
@@ -77,8 +76,8 @@
       alert("Please add a column");
       return false;
     } else if (
-      moment(parshiyosObj[endParsha].unformatted).isBefore(
-        parshiyosObj[startParsha].unformatted
+      moment($startEndParsha.end.date).isBefore(
+        moment($startEndParsha.start.date)
       )
     ) {
       alert("Please choose an end parsha that is after the start parsha");
@@ -96,14 +95,15 @@
   function createFinalJSON() {
     /*-----------get Zmanim info-------------*/
     //get start and end dates
-    let startDate = parshiyosObj[startParsha].unformatted;
-    let endDate = parshiyosObj[endParsha].unformatted;
+    let startDate = $startEndParsha.start.date;
+    let endDate = $startEndParsha.end.date;
     let result = {};
-    let zmanimURL = "";
     let zmanim = {};
     let lat = $location.lat;
     let long = $location.long;
-    zmanimURL = `https://www.hebcal.com/zmanim?cfg=json&geonameid=3448439&start=${startDate}&end=${endDate}&latitude=${lat}&long=${long}`;
+    let tzone = $location.tzone;
+    let zmanimURL = `https://www.hebcal.com/zmanim?cfg=json&start=${startDate}&end=${endDate}&latitude=${lat}&longitude=${long}&tzid=${tzone}`;
+
     //get zmanim for set dates
     async function getZmanim() {
       const res = await fetch(zmanimURL);
@@ -114,14 +114,16 @@
         result.Dates = [];
 
         /*-----------Populate result with Parshiyos and Dates-------------*/
+        let parshiyosObj = parshiyosList();
         let parshiyosObjKeysArray = Object.keys(parshiyosObj);
         let startParshaIndex = parshiyosObjKeysArray.indexOf(startParsha);
         let endParshaIndex = parshiyosObjKeysArray.indexOf(endParsha);
         for (let index = startParshaIndex; index <= endParshaIndex; index++) {
           const parshiyosObjKey = parshiyosObjKeysArray[index]; //Parsha
-          result.Dates.push(parshiyosObj[parshiyosObjKey].formatted); //Dates
-          result.Parshiyos.push(parshiyosObjKey); //Parsha
         }
+        result.Dates.push(parshiyosObj.dates); //Dates
+        result.Parshiyos.push(parshiyosObj.parshiyos); //Parsha
+        
         /*-----------Populate result with Times-------------*/
         $columns.forEach((element) => {
           result[element.name] = [];
@@ -159,7 +161,7 @@
         throw new Error(404);
       }
     }
-    getZmanim();
+    //getZmanim();
   }
   function createXLSXfromResult(object) {
     var wb = XLSX.utils.book_new();
@@ -199,42 +201,25 @@
     );
   }
 </script>
+ 
 
-<svelte:head />
+<main>  
 
-<main>
+  <div class="row">
+    <div class="col s6" ><img style="margin-right:-150px; margin-top:25px" src="assets/ZmanTime_500.png" height="80" /> </div>
+     <div class="col s6 pull-s3 text-center text-3xl	"><h2>Davenator</h2></div>
+     </div>
+
+  
   <Location />
+
 
   <div class="row">
     <div class="col s6">
-      <label>Start Parsha</label>
-      <select bind:value={startParsha} class="browser-default">
-        {#await promise}
-          ...
-        {:then}
-          <option value="" disabled selected>
-            Choose your starting Parsha
-          </option>
-          {#each Object.entries(parshiyosObj) as [parsha, date], i}
-            <option value={parsha}> {parsha}: {date.formatted}</option>
-          {/each}
-        {/await}
-      </select>
+        <ParshaPicker isStart={true}/>
     </div>
     <div class="col s6">
-      <label>End Parsha</label>
-      <select bind:value={endParsha} class="browser-default">
-        {#await promise}
-          ...
-        {:then}
-          <option value="" disabled selected>
-            Choose your ending Parsha</option
-          >
-          {#each Object.entries(parshiyosObj) as [parsha, date], i}
-            <option value={parsha}> {parsha}: {date.formatted}</option>
-          {/each}
-        {/await}
-      </select>
+      <ParshaPicker isStart={false}/>
     </div>
   </div>
 
@@ -251,6 +236,7 @@
     <svelte:component this={Rule} objAttributes={item} />
   {/each}
 </main>
+
 
 <style>
   main {
