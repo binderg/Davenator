@@ -9,6 +9,7 @@
 
   /*------------data-------------*/
   let parshiyosJSON = {};
+  let previewBool = false;
   $columns = [];
   $startEndParsha = {
     start: { date: "", parsha: "" },
@@ -65,7 +66,15 @@
 
   function save() {
     if (requiredFields()) {
-      createFinalJSON();
+      createFinalJSON("xlsx");
+    }
+  }
+
+  function preview() {
+    previewBool = false;
+    if (requiredFields()) {
+      previewBool = true;
+      createFinalJSON("preview");
     }
   }
 
@@ -107,14 +116,12 @@
     }
   }
 
-  function datestringFormatter(string){
-    let date = moment(string);         
-    return `${date.format("M")}/${date.format("D")}/${date.format("YYYY")}`
-          
-
+  function datestringFormatter(string) {
+    let date = moment(string);
+    return `${date.format("M")}/${date.format("D")}/${date.format("YYYY")}`;
   }
 
-  function createFinalJSON() {
+  function createFinalJSON(state) {
     /*-----------get Zmanim info-------------*/
     //get start and end dates
     let startDate = $startEndParsha.start.date;
@@ -130,10 +137,10 @@
     getParshiyosList()
       .then((res) => {
         for (const element of res.items) {
-          if (element.title.includes("Parashat")){
+          if (element.title.includes("Parashat")) {
             parshiyosObj.parshiyos.push(element.title.substr(9));
-          parshiyosObj.dates.push(datestringFormatter(element.date));
-        }
+            parshiyosObj.dates.push(datestringFormatter(element.date));
+          }
         }
         //console.log("createParshiyosObj " + JSON.stringify(parshiyosObj))
       })
@@ -159,22 +166,34 @@
 
             //--------------if rule - for dates in given zman, if date is in the list of Saturday dates, add time (with math)
             else if (element.type == "rule") {
-              console.log("po dates: " + JSON.stringify(parshiyosObj.dates))
+              console.log("po dates: " + JSON.stringify(parshiyosObj.dates));
               for (const dateKey in res.times[element.time]) {
-                console.log("date " + res.times[element.time][dateKey])
-                if ( // if date is one of the saturday day we want
-                  parshiyosObj.dates.includes(datestringFormatter(res.times[element.time][dateKey]))
+                console.log("date " + res.times[element.time][dateKey]);
+                if (
+                  // if date is one of the saturday day we want
+                  parshiyosObj.dates.includes(
+                    datestringFormatter(res.times[element.time][dateKey])
+                  )
                 ) {
-                  console.log("in")
+                  console.log("in");
                   result[element.name].push(
-                    timeMath(res.times[element.time][dateKey], element.minutes, element.beforeAfter)
+                    timeMath(
+                      res.times[element.time][dateKey],
+                      element.minutes,
+                      element.beforeAfter
+                    )
                   );
                 }
               }
             }
           });
-          /*-----------Create xlsx-------------*/
-          createXLSXfromResult(result);
+
+          /*-----------check state-------------*/
+          if (state == "xlsx") {
+            createXLSXfromResult(result);
+          } else if (state == "preview") {
+            createTable(resultToArrays(result));
+          }
         });
       });
   }
@@ -188,8 +207,8 @@
       CreatedDate: new Date(),
     };
 
-    const finalMatrix =resultToArrays(object);
-    
+    const finalMatrix = resultToArrays(object);
+
     console.log(finalMatrix);
     const worksheet = XLSX.utils.aoa_to_sheet(finalMatrix);
     //format column width
@@ -225,18 +244,37 @@
       excelArrays.map((row) => row[colIndex])
     );
   }
+
+  function createTable(tableData) {
+    var modal = document.getElementById("popupContent");
+    modal.innerHTML="";
+    var table = document.createElement("table");
+    var tableBody = document.createElement("tbody");
+    tableData.forEach(function (rowData) {
+      var row = document.createElement("tr");
+
+      rowData.forEach(function (cellData) {
+        var cell = document.createElement("td");
+        cell.appendChild(document.createTextNode(cellData));
+        row.appendChild(cell);
+      });
+
+      tableBody.appendChild(row);
+    });
+
+    table.appendChild(tableBody);
+    modal.appendChild(table);
+
+  }
 </script>
 
 <main>
   <div class="row">
-    <div class="col s6">
-      <img
-        style="margin-right:-150px; margin-top:25px"
-        src="assets/ZmanTime_500.png"
-        height="80"
-      />
-    </div>
-    <div class="col s6 pull-s3 text-center text-3xl	"><h2>ZmanTime</h2></div>
+    <img
+      style="float: left text-align: center;"
+      src="assets/ZmanTime_Banner.png"
+      width="400"
+    />
   </div>
 
   <Location />
@@ -259,6 +297,26 @@
   <a on:click={save} class="waves-effect waves-light btn"
     ><i class="material-icons left">cloud</i>Save</a
   >
+  <div class="box">
+    <a on:click={preview} class="waves-effect waves-light btn ibutton" href={previewBool? "#popup1" : "#"}
+    ><i class="material-icons left">preview</i>Preview</a
+  >
+
+</div>
+
+<div style="z-index:2147483647"  id="popup1" class="overlay">
+    <div class="popup">
+        <h5>Preview</h5>
+        <p style="font-style: italic;">From hebcal.com</p>
+        <a class="close" href="#"><span style="font-size:30px">&times;</span></a>
+        <div class="content"				>
+            <p style = "height: 30vw; overflow:auto;" id="popupContent">
+               
+            </p>
+        </div>
+    </div>
+</div>
+
   {#each $columns as item}
     <svelte:component this={Rule} objAttributes={item} />
   {/each}
@@ -284,4 +342,66 @@
       max-width: none;
     }
   }
+
+  .ibutton{
+	color:white
+}
+
+
+ .box {
+  margin: 10px 200px 0px 0px;
+  /* width: 40%;
+  margin: 0 auto;
+  background: rgba(255,255,255,0.2);
+  padding: 35px;
+  border: 2px solid #fff;
+  border-radius: 20px/50px;
+  background-clip: padding-box;
+  text-align: center; */
+} 
+
+
+.overlay {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  transition: opacity 500ms;
+  visibility: hidden;
+  opacity: 0;
+}
+.overlay:target {
+  visibility: visible;
+  opacity: 1;
+}
+
+.popup {
+  margin: 10px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 5px;
+  width: 80%;
+  position: relative;
+  transition: all 5s ease-in-out;
+  padding: 10px 30px 10px 30px
+}
+
+.popup .close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  transition: all 200ms;
+  font-size: 12px;
+  font-weight: bold;
+  text-decoration: none;
+  color: #333;
+}
+.popup .close:hover {
+  color: #06D85F;
+}
+.popup .content {
+  max-height: 30%;
+}
 </style>

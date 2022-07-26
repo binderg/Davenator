@@ -91,9 +91,8 @@ async function onMyLocationClick() {
   if (initUserLocation() && $location.lat !== undefined && $location.long !== undefined ) { 
     console.log("in2")
     //TODO: the first time the location button is clicked, location.lat and location.long are undefined, so api cannot be called. push 
-      getUserLocation($location.lat, $location.long).then((geoInfo) => {
-        console.log("in4 " + geoInfo.results[4].formatted_address)
-        const results = geoInfo.results[4] //just one of the address options. results is an array of same addresses, different formattings
+    getUserLocation($location.lat, $location.long).then((geoInfo) => {
+        const results = geoInfo.results[0] //just one of the address options. results is an array of same addresses, different formattings
         const address = results.formatted_address
         $location.address = address; // set location address
         console.log("ad " + address)
