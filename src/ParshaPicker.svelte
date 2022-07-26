@@ -59,7 +59,7 @@
 
 <main>
   {isStart?
-  ($startEndParsha.start.date==""?`Select a start date`:parsha):($startEndParsha.end.date==""?`Select a start date`:parsha)
+  ($startEndParsha.start.date==""?`Select a start date`:parsha):($startEndParsha.end.date==""?`Select an end date`:parsha)
   }
   <Flatpickr
     {options}

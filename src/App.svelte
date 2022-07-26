@@ -236,7 +236,7 @@
         height="80"
       />
     </div>
-    <div class="col s6 pull-s3 text-center text-3xl	"><h2>Davenator</h2></div>
+    <div class="col s6 pull-s3 text-center text-3xl	"><h2>ZmanTime</h2></div>
   </div>
 
   <Location />
