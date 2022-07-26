@@ -1,7 +1,7 @@
 <script>
-  import { onMount } from 'svelte';
+  // import { onMount } from 'svelte';
   // import M from 'materialize-css'
-  import ParshaPicker from './ParshaPicker.svelte'
+  import ParshaPicker from "./ParshaPicker.svelte";
   import Location from "./Location.svelte";
   import Rule from "./Rule.svelte";
   import { startEndParsha, location, columns, idIncrement } from "./store.js";
@@ -10,8 +10,16 @@
   /*------------data-------------*/
   let parshiyosJSON = {};
   $columns = [];
-  $startEndParsha = {start: {date:"", parsha:""}, end: {date:"", parsha:""}}
-  $location = {lat:"40.13", long:"55.14", tzone:"America/New_York"}
+  $startEndParsha = {
+    start: { date: "", parsha: "" },
+    end: { date: "", parsha: "" },
+  };
+  $location = {
+    address: "",
+    lat: "40.13",
+    long: "55.14",
+    tzone: "America/New_York",
+  };
   idIncrement.set(0); // this is a crude way to increment the id for new items
 
   function addItem(type) {
@@ -34,28 +42,24 @@
   //------------------------------
   let promise = Promise.resolve([]);
 
-  let parshiyosObj = {};
-
-  async function parshiyosList() {
-    let parshiyosObj ={parshiyos:[], dates:[]};
-    const res = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&s=on&leyning=off&latitude=${lat}&longitude=${long}&tzid=${tzone}&start=${startEndParsha.start.date}&end=${startEndParsha.end.date}`);
-
-    parshiyosJSON = await res.json();
+  //get zmanim for set dates
+  async function getParshiyosList() {
+    let startDate = $startEndParsha.start.date;
+    let endDate = $startEndParsha.end.date;
+    let lat = $location.lat;
+    let long = $location.long;
+    let tzone = $location.tzone;
+    const res = await fetch(
+      //tzone is hardcoded
+      `https://www.hebcal.com/hebcal?v=1&cfg=json&s=on&leyning=off&latitude=${lat}&longitude=${long}&tzid=America/New_York&start=${startDate}&end=${endDate}`
+    );
 
     if (res.ok) {
-
-      for(const element of parshiyosJSON.items){
-        if(element.title.includes("Parashat"))
-        parshiyosList.parshiyos.push(element.title.substr(9));
-        let date = moment(element.date).format("M-DD-YYYY");
-        parshiyosList.dates.push(`${date.format('M')}/${date.format('D')}/${date.format('YYYY')}`);
-      }
-      return parshiyosObj;
+      return await res.json();
     } else {
-      console.log("API error")
+      throw new Error(404);
     }
   }
-  // promise = parshiyos();
 
   //------------XLS-------------
 
@@ -69,7 +73,7 @@
     if ($startEndParsha.start.parsha == "") {
       alert("Please select a start Parsha");
       return false;
-    } else if (endParsha == null) {
+    } else if ($startEndParsha.end.parsha == "") {
       alert("Please select an end Parsha");
       return false;
     } else if ($columns.length < 1) {
@@ -80,7 +84,7 @@
         moment($startEndParsha.start.date)
       )
     ) {
-      alert("Please choose an end parsha that is after the start parsha");
+      alert("Please choose an end date that is after the start date");
     } else if (
       $location && // 👈 null and undefined check
       Object.keys($location).length === 0 &&
@@ -92,88 +96,107 @@
     }
   }
 
+  //get zmanim for set dates
+  async function getZmanim(zmanimURL) {
+    const res = await fetch(zmanimURL);
+
+    if (res.ok) {
+      return await res.json();
+    } else {
+      throw new Error(404);
+    }
+  }
+
+  function datestringFormatter(string){
+    let date = moment(string);         
+    return `${date.format("M")}/${date.format("D")}/${date.format("YYYY")}`
+          
+
+  }
+
   function createFinalJSON() {
     /*-----------get Zmanim info-------------*/
     //get start and end dates
     let startDate = $startEndParsha.start.date;
     let endDate = $startEndParsha.end.date;
     let result = {};
-    let zmanim = {};
     let lat = $location.lat;
     let long = $location.long;
-    let tzone = $location.tzone;
+    //let tzone = $location.tzone;
+    let tzone = "america/new_york";
     let zmanimURL = `https://www.hebcal.com/zmanim?cfg=json&start=${startDate}&end=${endDate}&latitude=${lat}&longitude=${long}&tzid=${tzone}`;
-
-    //get zmanim for set dates
-    async function getZmanim() {
-      const res = await fetch(zmanimURL);
-
-      if (res.ok) {
-        zmanim = await res.json();
-        result.Parshiyos = [];
-        result.Dates = [];
-
-        /*-----------Populate result with Parshiyos and Dates-------------*/
-        let parshiyosObj = parshiyosList();
-        let parshiyosObjKeysArray = Object.keys(parshiyosObj);
-        let startParshaIndex = parshiyosObjKeysArray.indexOf(startParsha);
-        let endParshaIndex = parshiyosObjKeysArray.indexOf(endParsha);
-        for (let index = startParshaIndex; index <= endParshaIndex; index++) {
-          const parshiyosObjKey = parshiyosObjKeysArray[index]; //Parsha
+    ////////////////////////////////////////////////////
+    let parshiyosObj = { parshiyos: [], dates: [] };
+    getParshiyosList()
+      .then((res) => {
+        for (const element of res.items) {
+          if (element.title.includes("Parashat")){
+            parshiyosObj.parshiyos.push(element.title.substr(9));
+          parshiyosObj.dates.push(datestringFormatter(element.date));
         }
-        result.Dates.push(parshiyosObj.dates); //Dates
-        result.Parshiyos.push(parshiyosObj.parshiyos); //Parsha
-        
-        /*-----------Populate result with Times-------------*/
-        $columns.forEach((element) => {
-          result[element.name] = [];
-          //--------------if textbox - for amount of parshiyos in parsha column, add to textcolumn
-          if (element.type != "rule") {
-            for (
-              let index = startParshaIndex;
-              index <= endParshaIndex;
-              index++
-            ) {
-              result[element.name].push(element.text);
-            }
-          }
-          // element has {id:null, type:"rule", name:"", minutes:"", beforeAfter:"", time:"", text:"" }
-          //get times
-          //key - parsha
-          if (element.type == "rule") {
-            for (const [key, value] of Object.entries(parshiyosObj)) {
-              //-------------if rule - do math and add the modified date
-              let data = zmanim.times[element.time][value.unformatted]; // data from zmanim object
-              if (data != undefined) {
-                //add chosen parshiyos and info-------------
-                // result.Parshiyos.push(key); //Parsha
-                // result.Dates.push(value.formatted); //Dates
-                result[element.name].push(
-                  timeMath(data, element.minutes, element.beforeAfter)
-                ); //Time
+        }
+        //console.log("createParshiyosObj " + JSON.stringify(parshiyosObj))
+      })
+      .then((r) => {
+        getZmanim(zmanimURL).then((res) => {
+          /*-----------Populate result with Parshiyos and Dates-------------*/
+          //let parshiyosObj = createParshiyosObj(); // parshiyosObj has {parshiyos:[], dates:[]};
+          result.Dates = parshiyosObj.dates; //Push Dates
+          result.Parshiyos = parshiyosObj.parshiyos; //Push Parsha
+          //console.log("parsh push " +  result.Parshiyos)
+          /*-----------Populate result with Times-------------*/
+          //console.log("sp " + $startEndParsha.start.parsha)
+          $columns.forEach((element) => {
+            // element has {id:null, type:"rule", name:"", minutes:"", beforeAfter:"", time:"", text:"" }
+            result[element.name] = [];
+            //--------------if textbox - for amount of parshiyos in parsha column, add to textcolumn
+            if (element.type == "textbox") {
+              for (const parsha of parshiyosObj.parshiyos) {
+                //console.log("includes " + parsha)
+                result[element.name].push(element.text);
               }
             }
-          }
+
+            //--------------if rule - for dates in given zman, if date is in the list of Saturday dates, add time (with math)
+            else if (element.type == "rule") {
+              console.log("po dates: " + JSON.stringify(parshiyosObj.dates))
+              for (const dateKey in res.times[element.time]) {
+                console.log("date " + res.times[element.time][dateKey])
+                if ( // if date is one of the saturday day we want
+                  parshiyosObj.dates.includes(datestringFormatter(res.times[element.time][dateKey]))
+                ) {
+                  console.log("in")
+                  result[element.name].push(
+                    timeMath(res.times[element.time][dateKey], element.minutes, element.beforeAfter)
+                  );
+                }
+              }
+            }
+          });
+          /*-----------Create xlsx-------------*/
+          createXLSXfromResult(result);
         });
-        /*-----------Create xlsx-------------*/
-        createXLSXfromResult(result);
-      } else {
-        throw new Error(404);
-      }
-    }
-    //getZmanim();
+      });
   }
+
   function createXLSXfromResult(object) {
     var wb = XLSX.utils.book_new();
     wb.Props = {
       Title: "Zmanim Table",
       Subject: "Zmanim",
-      Author: "Davenator",
+      Author: "ZmanTime",
       CreatedDate: new Date(),
     };
-    wb.SheetNames.push("Test Sheet");
-    var ws = XLSX.utils.aoa_to_sheet(resultToArrays(object));
-    wb.Sheets["Test Sheet"] = ws;
+
+    const finalMatrix =resultToArrays(object);
+    
+    console.log(finalMatrix);
+    const worksheet = XLSX.utils.aoa_to_sheet(finalMatrix);
+    //format column width
+    //const max_width = finalMatrix.reduce((w, r) => Math.max(w, r[0].length), 10);
+    //worksheet["!cols"] = [ { wch: max_width } ];
+    XLSX.utils.book_append_sheet(wb, worksheet, "Dates");
+
     XLSX.writeFile(wb, "Zmanim Table.xlsx");
   }
 
@@ -196,30 +219,34 @@
       //   tempArray.concat(object[element]);
       excelArrays.push([element, ...object[element]]);
     });
+    // console.log("result " + excelArrays[0].map((_, colIndex) =>
+    //  excelArrays.map((row) => row[colIndex])))
     return excelArrays[0].map((_, colIndex) =>
       excelArrays.map((row) => row[colIndex])
     );
   }
 </script>
- 
 
-<main>  
-
+<main>
   <div class="row">
-    <div class="col s6" ><img style="margin-right:-150px; margin-top:25px" src="assets/ZmanTime_500.png" height="80" /> </div>
-     <div class="col s6 pull-s3 text-center text-3xl	"><h2>Davenator</h2></div>
-     </div>
+    <div class="col s6">
+      <img
+        style="margin-right:-150px; margin-top:25px"
+        src="assets/ZmanTime_500.png"
+        height="80"
+      />
+    </div>
+    <div class="col s6 pull-s3 text-center text-3xl	"><h2>Davenator</h2></div>
+  </div>
 
-  
   <Location />
 
-
   <div class="row">
     <div class="col s6">
-        <ParshaPicker isStart={true}/>
+      <ParshaPicker isStart={true} />
     </div>
     <div class="col s6">
-      <ParshaPicker isStart={false}/>
+      <ParshaPicker isStart={false} />
     </div>
   </div>
 
@@ -236,7 +263,6 @@
     <svelte:component this={Rule} objAttributes={item} />
   {/each}
 </main>
-
 
 <style>
   main {

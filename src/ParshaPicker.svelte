@@ -1,8 +1,9 @@
 <script>
   import Flatpickr from "svelte-flatpickr";
-  import { startEndParsha } from "./store.js";
+  import { startEndParsha, location } from "./store.js";
   let lat = 40.3;
   let long = 42.3;
+  // let tzone = $location.tzone;
   let tzone = "America/New_York";
   export let isStart = true;
   let parsha = isStart ? $startEndParsha.start.parsha : $startEndParsha.end.parsha;
@@ -24,6 +25,7 @@
 
   const options = {
     element: "#my-picker",
+    monthSelectorType:"static",
     enableTime: false,
     disable: [
       function (date) {
@@ -44,12 +46,21 @@
     console.log(parsha);
     parshiyos(date).then((res) => {
       parsha = "Parshas " + res.items[0].title.substr(9);
+      if(isStart) {
+        $startEndParsha.start.parsha = parsha;
+        $startEndParsha.start.date = dateStr;
+      } else{
+        $startEndParsha.end.parsha = parsha;
+        $startEndParsha.end.date = dateStr;
+      }
     });
   }
 </script>
 
 <main>
-  {parsha}
+  {isStart?
+  ($startEndParsha.start.date==""?`Select a start date`:parsha):($startEndParsha.end.date==""?`Select a start date`:parsha)
+  }
   <Flatpickr
     {options}
     class="flatpickr"

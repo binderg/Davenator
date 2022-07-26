@@ -7,9 +7,15 @@
     autocomplete.addListener("place_changed", function () {
       var place = autocomplete.getPlace();
       // place variable will have all the information you are looking for.
+      $location.address = place.formatted_address;
       getGeoInfo(place.place_id).then((geoInfo) => {
-        $location = {lat: geoInfo.results[0].geometry.location.lat, long: geoInfo.results[0].geometry.location.lng  }// fetched geoInfo (lat and long)
-        console.log()
+        console.log(geoInfo)
+        $location.lat = geoInfo.results[0].geometry.location.lat
+        $location.long = geoInfo.results[0].geometry.location.lng 
+        let fullGeo = $location.lat + "%2C" + $location.long // fetched geoInfo (lat and long)
+        getGeoInfo(place.place_id).then((timezoneInfo) => {
+          $location.tzone = timezoneInfo.timeZoneId;
+        })
       });
     });
   }
@@ -17,6 +23,15 @@
   async function getGeoInfo(place_id) {
     const res = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?place_id=${place_id}&key=AIzaSyBnWc0u7o1Ey_P99m31Sf6Ucj3J7BGvr5U&libraries=places`
+    );  
+
+    if (res.ok) {
+      return res.json();
+    }
+  }
+  async function getTimeZone(coordinates) {
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/timezone/json?location=${coordinates}&timestamp=1331161200&key=AIzaSyBnWc0u7o1Ey_P99m31Sf6Ucj3J7BGvr5U`
     );  
 
     if (res.ok) {
@@ -66,18 +81,23 @@ async function getUserLocation(lat, lon) {
     );  
 
     if (res.ok) {
+      console.log("in3")
       return res.json();
     }
 }
 
 async function onMyLocationClick() {
+  console.log("in1")
   if (initUserLocation() && $location.lat !== undefined && $location.long !== undefined ) { 
+    console.log("in2")
     //TODO: the first time the location button is clicked, location.lat and location.long are undefined, so api cannot be called. push 
       getUserLocation($location.lat, $location.long).then((geoInfo) => {
+        console.log("in4 " + geoInfo.results[4].formatted_address)
         const results = geoInfo.results[4] //just one of the address options. results is an array of same addresses, different formattings
         const address = results.formatted_address
-        document.getElementById("autocomplete_search").setAttribute("value", address)
-        
+        $location.address = address; // set location address
+        console.log("ad " + address)
+        document.getElementById("autocomplete_search").setAttribute("value", address)  
       });
     } 
   }
