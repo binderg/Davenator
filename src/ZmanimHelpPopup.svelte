@@ -74,14 +74,14 @@ button, input[type="submit"], input[type="reset"] {
 
  .box {
   margin: 10px 200px 0px 0px;
-  /* width: 40%;
-  margin: 0 auto;
+  width: 70%;
+  /* margin: 0 auto;
   background: rgba(255,255,255,0.2);
   padding: 35px;
   border: 2px solid #fff;
   border-radius: 20px/50px;
   background-clip: padding-box;
-  text-align: center; */
+  text-align: center;  */
 } 
 
 
@@ -106,7 +106,7 @@ button, input[type="submit"], input[type="reset"] {
   padding: 20px;
   background: #fff;
   border-radius: 5px;
-  width: 30%;
+  width: 70%;
   position: relative;
   transition: all 5s ease-in-out;
   padding: 10px 30px 10px 30px
@@ -129,12 +129,12 @@ button, input[type="submit"], input[type="reset"] {
   max-height: 30%;
 }
 
-@media screen and (max-width: 700px){
+/* @media screen and (max-width: 700px){
   .box{
     width: 70%;
   }
   .popup{
     width: 70%;
   }
-}
+} */
 </style>

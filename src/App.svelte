@@ -298,16 +298,15 @@
     ><i class="material-icons left">cloud</i>Save</a
   >
   <div class="box">
-    <a on:click={preview} class="waves-effect waves-light btn ibutton" href={previewBool? "#popup1" : "#"}
+    <a on:click={preview} class="waves-effect waves-light btn ibutton" href={previewBool? "#popupPreview" : "#"}
     ><i class="material-icons left">preview</i>Preview</a
   >
 
 </div>
 
-<div style="z-index:2147483647"  id="popup1" class="overlay">
+<div style="z-index:2147483647"  id="popupPreview" class="overlay">
     <div class="popup">
         <h5>Preview</h5>
-        <p style="font-style: italic;">From hebcal.com</p>
         <a class="close" href="#"><span style="font-size:30px">&times;</span></a>
         <div class="content"				>
             <p style = "height: 30vw; overflow:auto;" id="popupContent">
