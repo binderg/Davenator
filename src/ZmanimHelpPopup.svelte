@@ -108,7 +108,7 @@ button, input[type="submit"], input[type="reset"] {
   border-radius: 5px;
   width: 70%;
   position: relative;
-  transition: all 5s ease-in-out;
+  /* transition: all 3s ease-in-out; */
   padding: 10px 30px 10px 30px
 }
 
@@ -116,7 +116,7 @@ button, input[type="submit"], input[type="reset"] {
   position: absolute;
   top: 20px;
   right: 30px;
-  transition: all 200ms;
+  /* transition: all 200ms; */
   font-size: 12px;
   font-weight: bold;
   text-decoration: none;
